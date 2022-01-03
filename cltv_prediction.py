@@ -1,5 +1,5 @@
 #BGNBD(Beta Geometric Negative Binomial Distribution) &
-# GG(Gamma Gamma) CLTV Estimation
+# GG(Gamma Gamma) CLTV Prediction
 
 ##Libraries and Functions
 
@@ -45,31 +45,40 @@ df = df_.copy()
 df.head()
 df.describe().T
 
-###SQL CONNECTION(SONRA SIL!!!)
-creds = {'user': 'synan_dsmlbc_group_8_admin',
-         'passwd': 'iamthedatascientist*****!',
-         'host': 'db.github.rocks',
-         'port': 3306,
-         'db': 'synan_dsmlbc_group_8'}
+###SQL CONNECTION(Hidden)
+# creds = {'user': '########',
+#          'passwd': '########',
+#          'host': '#######',
+#          'port': ###,
+#          'db': '########'}
 
-connstr = 'mysql+mysqlconnector://{user}:{passwd}@{host}:{port}/{db}'
-conn = create_engine(connstr.format(**creds))
+# connstr = 'mysql+mysqlconnector://{user}:{passwd}@{host}:{port}/{db}'
+# conn = create_engine(connstr.format(**creds))
 
-#data processing
+# Data Preprocessing
+
 df.isnull().sum()
 df[df["Country"] == "United Kingdom"].isnull().sum()
+
 df[~df["Invoice"].str.contains("C", na = False)].isnull().sum()
+
 df = df[df["Country"] == "United Kingdom"]
+
 df = df[~df["Invoice"].str.contains("C", na = False)]
+
 df.dropna(inplace = True)
+
 df = df[df["Quantity"] > 0]
 
 # Task1: 6 months CLTV prediction for customers in UK
 replace_with_thresholds(df, "Quantity")
+
 replace_with_thresholds(df, "Price")
+
 df.describe().T
 
 df["TotalPrice"] = df["Quantity"] * df["Price"]
+
 today_date = dt.datetime(2011, 12, 11)
 
 
@@ -108,6 +117,7 @@ bgf.fit(cltv_df['frequency'],
 ## Modelling Gamma-Gamma Framework
 
 ggf = GammaGammaFitter(penalizer_coef=0.01)
+
 ggf.fit(cltv_df['frequency'], cltv_df['monetary'])
 
 
@@ -167,9 +177,13 @@ cltv12 = ggf.customer_lifetime_value(bgf,
 cltv12.head()
 
 cltv12.shape
+
 cltv12 = cltv12.reset_index()
+
 cltv12.sort_values(by="clv", ascending=False).head(50)
+
 cltv12_final = cltv_df.merge(cltv12, on="Customer ID", how="left")
+
 # Top 10
 cltv12_final.sort_values(by="clv", ascending=False).head(10)
 
@@ -187,6 +201,7 @@ cltv6 = ggf.customer_lifetime_value(bgf,
                                    discount_rate=0.01)
 
 cltv6_final = cltv_df.merge(cltv6, on = "Customer ID", how = "left")
+
 cltv6_final.head()
 
 # Standardization
@@ -200,4 +215,4 @@ cltv6_final["cltv_segment"] = pd.qcut(cltv6_final["clv"], 4, labels=["D", "C", "
 cltv6_final.head()
 
 # Task 4: Sending work to SQL database
-cltv6_final.to_sql(name='baran_ege', con=conn, if_exists='replace', index=False)
+#cltv6_final.to_sql(name='baran_ege', con=conn, if_exists='replace', index=False)
